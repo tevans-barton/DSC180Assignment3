@@ -73,7 +73,7 @@ def clean_2014_2017(df):
 
 
 def clean_2018_2019(df):
-    beats_and_serv_areas = gpd.read_file('../pd_beats_datasd/pd_beats_datasd.shp')
+    beats_and_serv_areas = gpd.read_file('../data/pd_beats_datasd/pd_beats_datasd.shp')
     beats_serv_dict = beats_and_serv_areas[['beat', 'serv']].set_index('beat', drop = True).serv.to_dict()
     df['stop_cause'] = df['reason_for_stop']
     df['subject_race'] = df['race']

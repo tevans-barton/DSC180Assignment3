@@ -22,7 +22,7 @@ def get_table(year, ripa_suffixes = None, ripa_columns = None):
 
 def get_data(years, ripa_suffixes, ripa_columns, outpath):
     if not os.path.exists(outpath):
-        os.mkdir(outpath)
+        os.makedirs(outpath, exist_ok = True)
     for y in years:
         if y == 2018:
             get_table(y, ripa_suffixes, ripa_columns).to_csv(outpath + '/2018-2019.csv', index = False)
