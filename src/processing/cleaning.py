@@ -5,8 +5,9 @@ import os
 import json
 import sys
 
+OUTPATH = 'data/out/'
 
-def clean_2014_2017(df_passed):
+def clean_2014_2017(df_csv, notebook = False):
 	#Decrease granularity of race to conform to 2018-2019 races
 	race_mapping = {
 		'A' : 'Asian',
@@ -29,7 +30,7 @@ def clean_2014_2017(df_passed):
 		'Z' : 'Middle Eastern or South Asian',
 		'X' : None
 	}
-	df = df_passed.copy()
+	df = pd.read_csv(df_csv)
 	df['subject_race'] = df['subject_race'].map(race_mapping)
 	#Map Sex to full word
 	sex_mapping = {
@@ -69,13 +70,24 @@ def clean_2014_2017(df_passed):
 	df['obtained_consent'] = df['obtained_consent'].map(reg_binary_mapping)
 	df['contraband_found'] = df['contraband_found'].apply(lambda x: arr_search_convert(x))
 	df['property_seized'] = df['property_seized'].apply(lambda x: arr_search_convert(x))
+	if notebook:
+		path = '../' + OUTPATH
+	else:
+		path = OUTPATH
+	if not os.path.exists(path):
+		os.makedirs(path, exist_ok = True)
+	df.to_csv(path + df_csv[-8 : -4] + '_cleaned.csv')
 	return df
 
 
 
-def clean_2018_2019(df_passed):
-	df = df_passed.copy()
-	beats_and_serv_areas = gpd.read_file('../data/pd_beats_datasd/pd_beats_datasd.shp')
+def clean_2018_2019(df_csv, notebook = False):
+	df = pd.read_csv(df_csv)
+	if notebook:
+		beats_path = '../data/pd_beats_datasd/pd_beats_datasd.shp'
+	else:
+		beats_path = 'data/pd_beats_datasd/pd_beats_datasd.shp'
+	beats_and_serv_areas = gpd.read_file(beats_path)
 	beats_serv_dict = beats_and_serv_areas[['beat', 'serv']].set_index('beat', drop = True).serv.to_dict()
 	df['stop_cause'] = df['reason_for_stop']
 	df['subject_race'] = df['race']
@@ -94,9 +106,17 @@ def clean_2018_2019(df_passed):
 	df['contraband_found'] = contraband_2018
 	property_2018 = ['N' if x is np.nan else 'Y' for x in df.type_of_property_seized]
 	df['property_seized'] = property_2018
-	return df[['stop_id', 'stop_cause', 'service_area', 'subject_race', 'subject_sex', 'subject_age', 
+	df = df[['stop_id', 'stop_cause', 'service_area', 'subject_race', 'subject_sex', 'subject_age', 
 				'date_stop', 'time_stop', 'arrested', 'searched', 'obtained_consent', 'contraband_found',
 				'property_seized']]
+	if notebook:
+		path = '../' + OUTPATH
+	else:
+		path = OUTPATH
+	if not os.path.exists(path):
+		os.makedirs(path, exist_ok = True)
+	df.to_csv(path + df_csv[-13 : -4] + '_cleaned.csv')
+	return df
 
 def clean_census(df):
 	columns_to_keep = [

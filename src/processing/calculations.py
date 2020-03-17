@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.stats
 
 def calc_total_stop_rates(cleaned_census, year_df):
     temp_stop_id = year_df[['stop_id', 'subject_race']].groupby('subject_race').agg('count')['stop_id']
@@ -45,3 +46,16 @@ def veil_of_darkness(df_passed):
     is_dark = df['time_stop'] > df['Sunset']
     df['Dark'] = is_dark
     return df
+
+def calc_ks(light_df, dark_df):
+    t1 = (dark_df[['stop_id', 'subject_race']].groupby('subject_race').agg('count') / len(dark_df))['stop_id']
+    t2 = (light_df[['stop_id', 'subject_race']].groupby('subject_race').agg('count') / len(light_df))['stop_id']
+    s1 = set(t1.index)
+    s2 = set(t2.index)
+    diff1 = list(s1 - s2)
+    diff2 = list(s2 - s1)
+    for e in diff1:
+        t2[e] = 0
+    for e in diff2:
+        t1[e] = 0
+    return scipy.stats.ks_2samp(t1.values, t2.values)

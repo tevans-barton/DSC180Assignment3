@@ -11,5 +11,5 @@
                       ["stop_id", "type_of_property_seized"],
                       ["stop_id", "contraband"],
                       ["stop_id", "action", "consented"]],
-    "outpath" : "../data/raw"
+    "outpath" : "data/raw"
 }
