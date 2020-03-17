@@ -31,6 +31,19 @@ def post_stop_plot(df):
     plt.title('Post Stop Outcomes Plot by Race')
     return
 
+def plot_light_dark(light_df, dark_df, year):
+    to_plot = pd.DataFrame()
+    dark_df_stops = dark_df[['subject_race', 'stop_id']].groupby('subject_race').agg('count') / len(dark_df)
+    light_df_stops = light_df[['subject_race', 'stop_id']].groupby('subject_race').agg('count') / len(light_df)
+    total_df = (light_df_stops).copy()
+    total_df['dark_stops'] = dark_df_stops['stop_id']
+    total_df = total_df.rename(mapper = {'stop_id' : 'light_stops'}, axis = 1)
+    plotted = total_df.plot(kind = 'bar')
+    p, l = plotted.get_legend_handles_labels()
+    plotted.legend(p, l, loc='upper left')
+    plt.title('Stop Distributions by Race in Light and Dark Environments for ' + str(year))
+    return
+
 # def plot_service_area_stop_rate(df, service_area):
 #     assert(isinstance(service_area, str)), 'Service Area Must be String'
 #     to_plot_series = df.loc[service_area]

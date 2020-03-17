@@ -33,7 +33,15 @@ def get_inner_twilight_period(df_passed):
     df = df[df['is_in_twilight']].reset_index(drop = True)
     return df
 
-def light_or_dark(df_passed):
+def veil_of_darkness(df_passed):
     df = df_passed.copy()
-    r = requests.get('https://api.sunrise-sunset.org/json', params={'lat': 32, 'lng': -117}).json()['results']
-
+    sunsets = pd.read_csv('../data/monthwise_sunset.csv')[0:12]
+    sunsets = sunsets.drop(['Day', 'Age of Moon', 'Rise', 'Culm'], axis = 1)
+    sunsets = sunsets.set_index('Month', drop = True)
+    sunsets['Set'] = pd.to_datetime(sunsets.Set)
+    sunset_dict = sunsets['Set'].to_dict()
+    df['Month'] = df['date_stop'].str.slice(5,7).astype(int)
+    df['Sunset'] = df['Month'].map(sunset_dict)
+    is_dark = df['time_stop'] > df['Sunset']
+    df['Dark'] = is_dark
+    return df
