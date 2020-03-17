@@ -6,7 +6,7 @@ import json
 import sys
 
 
-def clean_2014_2017(df):
+def clean_2014_2017(df_passed):
 	#Decrease granularity of race to conform to 2018-2019 races
 	race_mapping = {
 		'A' : 'Asian',
@@ -29,6 +29,7 @@ def clean_2014_2017(df):
 		'Z' : 'Middle Eastern or South Asian',
 		'X' : None
 	}
+	df = df_passed.copy()
 	df['subject_race'] = df['subject_race'].map(race_mapping)
 	#Map Sex to full word
 	sex_mapping = {
@@ -72,27 +73,60 @@ def clean_2014_2017(df):
 
 
 
-def clean_2018_2019(df):
-    beats_and_serv_areas = gpd.read_file('../data/pd_beats_datasd/pd_beats_datasd.shp')
-    beats_serv_dict = beats_and_serv_areas[['beat', 'serv']].set_index('beat', drop = True).serv.to_dict()
-    df['stop_cause'] = df['reason_for_stop']
-    df['subject_race'] = df['race']
-    df['subject_age'] = df['perceived_age']
-    df['service_area'] = df['beat'].map(beats_serv_dict)
-    df = df.drop('beat', axis = 1)
-    arrested_2018 = ['Y' if 'arrest' in x or 'Arrest' in x or 'hold' in x else 'N' for x in df.result]
-    df['arrested'] = arrested_2018
-    searched_2018 = ['N' if x is np.nan else 'Y' for x in df.basis_for_search]
-    df['searched'] = searched_2018
-    df['obtained_consent'] = df['consented']
-    contraband_2018 = ['Y' if x != 'None' else 'N' for x in df.contraband]
-    df['contraband_found'] = contraband_2018
-    property_2018 = ['N' if x is np.nan else 'Y' for x in df.type_of_property_seized]
-    df['property_seized'] = property_2018
-    return df[['stop_id', 'stop_cause', 'service_area', 'subject_race', 'perceived_gender', 'subject_age', 
-                'date_stop', 'time_stop', 'arrested', 'searched', 'obtained_consent', 'contraband_found',
-                'property_seized']]
+def clean_2018_2019(df_passed):
+	df = df_passed.copy()
+	beats_and_serv_areas = gpd.read_file('../data/pd_beats_datasd/pd_beats_datasd.shp')
+	beats_serv_dict = beats_and_serv_areas[['beat', 'serv']].set_index('beat', drop = True).serv.to_dict()
+	df['stop_cause'] = df['reason_for_stop']
+	df['subject_race'] = df['race']
+	df['subject_age'] = df['perceived_age']
+	df['subject_sex'] = df['perceived_gender']
+	df['service_area'] = df['beat'].map(beats_serv_dict)
+	df = df.drop('beat', axis = 1)
+	df = df.dropna(subset = ['service_area'])
+	df['service_area'] = [str(int(x)) for x in df.service_area]
+	arrested_2018 = ['Y' if 'arrest' in x or 'Arrest' in x or 'hold' in x else 'N' for x in df.result]
+	df['arrested'] = arrested_2018
+	searched_2018 = ['N' if x is np.nan else 'Y' for x in df.basis_for_search]
+	df['searched'] = searched_2018
+	df['obtained_consent'] = df['consented']
+	contraband_2018 = ['Y' if x != 'None' else 'N' for x in df.contraband]
+	df['contraband_found'] = contraband_2018
+	property_2018 = ['N' if x is np.nan else 'Y' for x in df.type_of_property_seized]
+	df['property_seized'] = property_2018
+	return df[['stop_id', 'stop_cause', 'service_area', 'subject_race', 'subject_sex', 'subject_age', 
+				'date_stop', 'time_stop', 'arrested', 'searched', 'obtained_consent', 'contraband_found',
+				'property_seized']]
 
+def clean_census(df):
+	columns_to_keep = [
+		'serv',
+		'H7X001',
+        'H7X002',
+        'H7X003',
+        'H7X004',
+        'H7X005',
+        'H7X006',
+        'H7X007',
+        'H7X008'
+	]
+	column_rename_map = {
+		'serv' : 'service_area',
+		'H7X001' : 'Total',
+        'H7X002' : 'White',
+        'H7X003' : 'Black/African American',
+        'H7X004' : 'Native American',
+        'H7X005' : 'Asian',
+        'H7X006' : 'Pacific Islander',
+        'H7X007' : 'Other',
+        'H7X008' : 'Two or More Races'
+	}
+	temp = df.copy()
+	temp = temp[columns_to_keep]
+	temp = temp.rename(column_rename_map, axis = 1)
+	temp['service_area'] = [str(x) for x in temp.service_area]
+	to_return = temp.groupby('service_area').agg('sum')
+	return to_return
 
 
 
