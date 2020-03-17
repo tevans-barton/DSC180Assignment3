@@ -34,9 +34,12 @@ def get_inner_twilight_period(df_passed):
     df = df[df['is_in_twilight']].reset_index(drop = True)
     return df
 
-def veil_of_darkness(df_passed):
+def veil_of_darkness(df_passed, year = None, notebook = False):
     df = df_passed.copy()
-    sunsets = pd.read_csv('../data/monthwise_sunset.csv')[0:12]
+    if notebook:
+        sunsets = pd.read_csv('../data/monthwise_sunset.csv')[0:12]
+    else:
+        sunsets = pd.read_csv('data/monthwise_sunset.csv')[0:12]
     sunsets = sunsets.drop(['Day', 'Age of Moon', 'Rise', 'Culm'], axis = 1)
     sunsets = sunsets.set_index('Month', drop = True)
     sunsets['Set'] = pd.to_datetime(sunsets.Set)
@@ -45,6 +48,8 @@ def veil_of_darkness(df_passed):
     df['Sunset'] = df['Month'].map(sunset_dict)
     is_dark = df['time_stop'] > df['Sunset']
     df['Dark'] = is_dark
+    if not notebook:
+        df.to_csv('data/out/veil_of_darkness_' + str(year) + '.csv')
     return df
 
 def calc_ks(light_df, dark_df):
